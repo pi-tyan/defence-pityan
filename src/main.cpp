@@ -36,17 +36,19 @@ r=ball_r();
 deg=ball_deg();
 gAD=ball_gAD();
 if (gAD[CN2] < 409){
-  digitalWrite(4,HIGH);
-  digitalWrite(4,LOW);
+ motor(80,80);
+ wait_ms(200);
+}else if (gAD[CN1] < 613 ){
+  motor(50,0);
+  wait_ms(300);
+  motor(0,50);
+  wait_ms(300);
 }else if (ball2>ball16){
-  digitalWrite(2,HIGH);
-  digitalWrite(6,LOW);
-}else if (ball1){
-  digitalWrite(6,LOW);
-  digitalWrite(2,HIGH);
-}else if (ball11){
-  digitalWrite(4,LOW);
-  digitalWrite(4,HIGH);
+  digitalWrite(5,LOW);
+  digitalWrite(3,HIGH);
+}else if (ball15>ball1){
+  digitalWrite(3,LOW);
+  digitalWrite(5,HIGH);
   }  
 
 } 
