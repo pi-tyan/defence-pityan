@@ -13,7 +13,7 @@ float y[]={y1,y2,y3,y4,y5};
 void ba_val();
 float ball_r();  //rの値を求める
 float ball_deg(); //角度を求める
-float ball_gAD();
+float ball_gAD(); //しきい値を求める
 void pin();
 void vec(float le1,float le2,float le3,float le4);
 void vec5(float x1, float y1, float x2, float y2, float x3, float y3, float x4, float y4, float x5, float y5);
@@ -194,6 +194,8 @@ float ball_deg(){
     float deg_old= (180/pi)* ret;
   return degfunc2(deg_old);
 }
+float ball_gAD(){
+    int
 float degfunc(float tardeg){
   if (tardeg <180) {
     return 2*tardeg;
