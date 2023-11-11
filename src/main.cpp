@@ -13,7 +13,6 @@ float y[]={y1,y2,y3,y4,y5};
 void ba_val();
 float ball_r();  //rの値を求める
 float ball_deg(); //角度を求める
-float ball_gAD(); //しきい値を求める
 void pin();
 void vec(float le1,float le2,float le3,float le4);
 void vec5(float x1, float y1, float x2, float y2, float x3, float y3, float x4, float y4, float x5, float y5);
@@ -34,23 +33,6 @@ void loop() {
 int A =0;
 r=ball_r();
 deg=ball_deg();
-gAD=ball_gAD();
-if (gAD[CN2] < 409){
- motor(80,80);
- wait_ms(200);
-}else if (gAD[CN1] < 613 ){
-  motor(50,0);
-  wait_ms(300);
-  motor(0,50);
-  wait_ms(300);
-}else if (ball2>ball16){
-  digitalWrite(5,LOW);
-  digitalWrite(3,HIGH);
-}else if (ball15>ball1){
-  digitalWrite(3,LOW);
-  digitalWrite(5,HIGH);
-  }  
-
 } 
   
 
