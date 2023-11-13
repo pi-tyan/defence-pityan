@@ -2,7 +2,9 @@
 #include <stdio.h>//stdio.hのファイルを読み込む
 #include <math.h>//math.hのファイルを読み込む
 #include <time.h>//time.hのファイルを読み込む
+#include <wire.h>//wire.hのファイルを読み込む
 #define pi 3.1415926535//円周率3.1215926535を定数として定義する。
+#define DSR1603_ADDRESS 0x28 // DSR1603のI2Cアドレス
 int ball1,ball2,ball3,ball4,ball5,ball6,ball7,ball8,ball9,ball10,ball11,ball12,ball13,ball14,ball15,ball16,line1,line2,line3,line4,line5,line6,line7,line8,line9,line10,line11,line12,line13,line14,line15,line16;//ball,lineの関数を代入。
 float x1,y1,x2,y2,x3,y3,x4,y4,x5,y5,r,deg;//x,yの値とrの値、角度を数値として表す。
 unsigned long time_new, time_old = 0;//新しい時間、古い時間を変数として定義する。
@@ -22,6 +24,8 @@ void sort();//並び替えの値
 float degfunc(float tardeg);//degfuncの値に角度のアーカイブを代入する。
 void motor(float angle);//モーターに角度を代入する。
 void setup(){//準備を始める
+byte ADDRESS = 0x28;
+byte EULER_REGISTER = 0x14;
 Serial.begin(9600);//シリアル通信のビットを9600とする。
 for (int i =0; i<16; i++){//iの値を進めていき、16がiより小さくならないまで実行する。
   ba[i]=0;//ボールセンサーの値のiを0とする。
@@ -38,6 +42,56 @@ deg=ball_deg();//degにball_degを代入する。
 }
   
 
+void setup(){//準備を始める。
+  Wire.begin();//
+  Serial.begin(9600);//シリアル通信のビットを9600とする。
+}
+
+void loop(){
+  Wire.beginTransmission(DSR1603_ADDRESS);
+  Wire.write(0X00);//レジスタ0×00を指定
+  Wire.endTransmission(false);
+  Wire.requestFrom(DSR1603_ADDRESS,6,true);
+  int16_t x=Wire.read() | (Wire.read() <<8);
+  int16_t y=Wire.read() | (Wire.read() <<8);
+  int16_t z=Wire.read() | (Wire.read() <<8);
+  Serial.print("x:");
+  Serial.print(x);
+  Serial.print(",y:");
+  Serial.print(y);
+  Serial.print(",z:");
+  Serial.print(z);
+  delay(100);
+}
+
+
+int merge(byte low, byte high){
+  int result = low | (high<<8);
+  if(result > 32767){
+    result -=65536;
+  }
+  return result;
+}
+
+void writeToBNO(byte reg, byte val, int dly){
+  Wire.beginTransmission(ADDRESS);
+  Wire.write(reg);
+  Wire.write(val);
+  Wire.endTransmission(false);
+  delay(dly);
+}
+
+void initBNO(){
+  Wire.beginTransmission(ADDRESS);
+  Wire.write(0x00);
+  Wire.endTransmission(false);
+  Wire.requestFrom(ADDRESS,1);
+  if(Wire.read()==0xa0){
+    Serial.println("BNO055 found.");
+    writeToBNO(0x3d,0x00,80);//operating mode = confing mode
+    writeToBNO(0x3f,0x20,1000);
+    writeToBNO(0x3e,0x00,80);
+    
 
 // put function definitions here://ここに関数定義を置く。
 void vec(float x1,float y1,float x2,float y2){//ベクトルにx1,y1,x2,y2を代入。
