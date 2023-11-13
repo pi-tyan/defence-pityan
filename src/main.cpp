@@ -91,7 +91,7 @@ void initBNO(){
     writeToBNO(0x3d,0x00,80);//operating mode = confing mode
     writeToBNO(0x3f,0x20,1000);
     writeToBNO(0x3e,0x00,80);
-    
+    writeToBNO(0x3f,0x80,1000);
 
 // put function definitions here://ここに関数定義を置く。
 void vec(float x1,float y1,float x2,float y2){//ベクトルにx1,y1,x2,y2を代入。
