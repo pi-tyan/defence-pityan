@@ -2,9 +2,13 @@
 #include <stdio.h>//stdio.hのファイルを読み込む
 #include <math.h>//math.hのファイルを読み込む
 #include <time.h>//time.hのファイルを読み込む
-#include <wire.h>//wire.hのファイルを読み込む
+#include <Wire.h>//Wire.hのファイルを読み込む
+#include "arudino.h"
+#include "DCmotor.h"
 #define pi 3.1415926535//円周率3.1215926535を定数として定義する。
 #define DSR1603_ADDRESS 0x28 // DSR1603のI2Cアドレス
+#define E1 9
+#define M1 8
 int ball1,ball2,ball3,ball4,ball5,ball6,ball7,ball8,ball9,ball10,ball11,ball12,ball13,ball14,ball15,ball16,line1,line2,line3,line4,line5,line6,line7,line8,line9,line10,line11,line12,line13,line14,line15,line16;//ball,lineの関数を代入。
 float x1,y1,x2,y2,x3,y3,x4,y4,x5,y5,r,deg;//x,yの値とrの値、角度を数値として表す。
 unsigned long time_new, time_old = 0;//新しい時間、古い時間を変数として定義する。
@@ -23,9 +27,12 @@ void bubble_sort(int n, int a[]);//int nとint aを比較し、条件が合え�
 void sort();//並び替えの値
 float degfunc(float tardeg);//degfuncの値に角度のアーカイブを代入する。
 void motor(float angle);//モーターに角度を代入する。
+void DCmotor_init(void);
+void DCmotor_set(int accel);
 void setup(){//準備を始める
 byte ADDRESS = 0x28;
-byte EULER_REGISTER = 0x14;
+byte EULER_REGISTER = 0x1A;
+byte ON_flag=0;
 Serial.begin(9600);//シリアル通信のビットを9600とする。
 for (int i =0; i<16; i++){//iの値を進めていき、16がiより小さくならないまで実行する。
   ba[i]=0;//ボールセンサーの値のiを0とする。
@@ -38,9 +45,46 @@ void loop(){//繰り返し
 int A =0;//Aに0を代入する。
 r=ball_r();//rにball_rを代入する。
 deg=ball_deg();//degにball_degを代入する。
-//ここにdefenceのプログラムを書くよ！
+
 }
   
+
+void DCmotor_init(void){
+     pinMode(M1,OUTPUT);
+}
+void DCmotor_set(int accel){
+  int value;
+  if(accel>=0){
+    value=map(accel,0,100,0,255);
+    digitalWrite(M1,HIGH);
+    analogWrite(E1,value);
+  }
+  else{
+    value=map(-accel,0,100,0,255);
+    digitalWrite(M1,LOW);
+    analogWrite(E1,value);
+  }
+}     
+void setup()
+{
+  DCmotor_init();
+  pinMode(14,INPUT_PULLUP);
+  pinMode(15,INPUT_PULLUP);
+}
+void loop()
+{
+  if(digitalRead(14)==0)
+  ON_flag=1;
+  if(digitalRead(15)==0)
+  ON_flag=0;
+
+  if(ON_flag){
+    DCmotor_set(-60);
+  }
+  else{
+    DCmotor_set(0);
+  }
+}
 
 void setup(){//準備を始める。
   Wire.begin();//
@@ -66,7 +110,7 @@ void loop(){
 
 
 int merge(byte low, byte high){
-  int result = low | (high<<8);
+  int result = low | (high << 8);
   if(result > 32767){
     result -=65536;
   }
@@ -89,9 +133,54 @@ void initBNO(){
   if(Wire.read()==0xa0){
     Serial.println("BNO055 found.");
     writeToBNO(0x3d,0x00,80);//operating mode = confing mode
-    writeToBNO(0x3f,0x20,1000);
-    writeToBNO(0x3e,0x00,80);
-    writeToBNO(0x3f,0x80,1000);
+    writeToBNO(0x3f,0x20,1000);//sys_trigger=rst_sys
+    writeToBNO(0x3e,0x00,80);//pwr_mode=normal mode
+    writeToBNO(0x3f,0x80,1000);//sys trigger=clk_sel ex_osc
+    writeToBNO(0x3d,0x0c,80);//operating mode=nodf
+  }else{
+    while(1){
+      Serial.println("BNO055 not found..");
+      delay(1000);
+    }
+  }
+} 
+
+
+void setup(){
+  //put your setup code here, to run once:
+  Serial.begin(9600);
+  Wire.begin(9600);
+  initBNO();
+}
+
+void loop(){
+  //put your main code here, to run repeatedly:
+  int euler[6];
+
+  Wire.beginTransmission(ADDRESS);
+  Wire.write(EULER_REGISTER);
+  Wire.endTransmission(false);
+
+  Wire.requestFrom(ADDRESS, 6);
+  byte buffer[6];
+  Wire.readBytes(buffer, 6);
+
+  euler[0] = merge(buffer[0], buffer[1]);
+  euler[1] = merge(buffer[2], buffer[2]);
+  euler[2] = merge(buffer[4], buffer[5]);
+
+  float yaw =float(euler[0])/16.0;
+  float roll =float(euler[1])/16.0;
+  float pitch =float(euler[2])/16.0;
+
+  Serial.print("yaw =");
+  Serial.print(yaw);
+  Serial.print("roll =");
+  Serial.print(roll);
+  Serial.print("pitch =");
+  Serial.print(pitch);
+  delay(50);
+  }
 
 // put function definitions here://ここに関数定義を置く。
 void vec(float x1,float y1,float x2,float y2){//ベクトルにx1,y1,x2,y2を代入。
