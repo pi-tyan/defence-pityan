@@ -27,12 +27,12 @@ void bubble_sort(int n, int a[]);//int nとint aを比較し、条件が合え�
 void sort();//並び替えの値
 float degfunc(float tardeg);//degfuncの値に角度のアーカイブを代入する。
 void motor(float angle);//モーターに角度を代入する。
-void DCmotor_init(void);
+void DCmotor_init();
 void DCmotor_set(int accel);
 void setup(){//準備を始める
-byte ADDRESS = 0x28;//
-byte EULER_REGISTER = 0x1A;
-byte ON_flag=0;
+byte ADDRESS = 0x28;//ADDRESSを0x28にして表示
+byte EULER_REGISTER = 0x1A;//EULER_REGISTERを0x1Aにして表示
+byte ON_flag=0;//ON_flagを0として表示
 Serial.begin(9600);//シリアル通信のビットを9600とする。
 for (int i =0; i<16; i++){//iの値を進めていき、16がiより小さくならないまで実行する。
   ba[i]=0;//ボールセンサーの値のiを0とする。
@@ -40,146 +40,164 @@ for (int i =0; i<16; i++){//iの値を進めていき、16がiより小さくな
 }
 }
 
-
 void loop(){//繰り返し
 int A =0;//Aに0を代入する。
 r=ball_r();//rにball_rを代入する。
 deg=ball_deg();//degにball_degを代入する。
+void DCmotor_init(){//DCmotorの値を初期化する。
+     pinMode(M1,OUTPUT);//Ardiunoマイコンの回転方向を出力
 
 }
-  
-
-void DCmotor_init(void){
-     pinMode(M1,OUTPUT);
-}
-void DCmotor_set(int accel){
-  int value;
-  if(accel>=0){
-    value=map(accel,0,100,0,255);
-    digitalWrite(M1,HIGH);
-    analogWrite(E1,value);
+void DCmotor_set(int accel){//DCmotor_setに加速の値を代入
+  int value;//数値を表示
+  if(accel>=0){//もし加速の値が0以上ならば
+    value=map(accel,0,100,0,255);//数値を加速の値に変える。
+    digitalWrite(M1,HIGH);//PWM出力を出力する。
+    analogWrite(E1,value);//回転方向の値を加速させ、出力する。
   }
-  else{
-    value=map(-accel,0,100,0,255);
-    digitalWrite(M1,LOW);
-    analogWrite(E1,value);
+  else{//そうじゃなければ
+    value=map(-accel,0,100,0,255);//数値を減速の値に変える。
+    digitalWrite(M1,LOW);//PWM出力を制御する。
+    analogWrite(E1,value);//回転方向の値を減速させ、出力する。
   }
 }     
-void setup()
+void setup()//準備する。
 {
-  DCmotor_init();
-  pinMode(14,INPUT_PULLUP);
-  pinMode(15,INPUT_PULLUP);
+  DCmotor_init();//DCmotorの値を初期化する。
+  pinMode(14,INPUT_PULLUP);//pinModeの値を14上げる。
+  pinMode(15,INPUT_PULLUP);//pinModeの値を15上げる。
 }
+void loop()//繰り返し
+{
+  if(digitalRead(14)==0)//もしHIGHかLOWの値を読んだとき、pinModeが0以上ならば
+  ON_flag=1;//関数flagを1とし、ONとする。
+  if(digitalRead(15)==0)//もしHIGHかLOWの値を読んだとき、pinModeが0以上ならば
+  ON_flag=0;//関数flagを0とし、ONとする。
+
+  if(ON_flag){//もしflagがONのとき、
+    DCmotor_set(-60);//DCmotor_setの値を-60する。
+  }
+  else{//そうじゃなければ
+    DCmotor_set(0);//DCmotor_setの値を0とする。  }
+ }
+}
+ 
+void setup(){//準備を始める。
+  Wire.begin();//通信を開始。
+  Serial.begin(9600);//シリアル通信のビットを9600とする。
+　while(!Serial);
+}
+
+bool slavePresent(byte adr)
+{
+  Wire.beginTransmission(adr)
+  return(Wire.endTransmission()==0)
+}
+
 void loop()
 {
-  if(digitalRead(14)==0)
-  ON_flag=1;
-  if(digitalRead(15)==0)
-  ON_flag=0;
+  Serial.printh("I2C slave device list.");
 
-  if(ON_flag){
-    DCmotor_set(-60);
-  }
-  else{
-    DCmotor_set(0);
-  }
+　for(byte adr=1;adr<127;adr++){
+
+   if(slavePresent(adr)){
+     if(adr<16)Serial.print("0");
+     Serial.print(adr HEX);
+     Serial.print("");
+   }
+   Serial/print("\nDone");
+   delay(5000); 
 }
 
-void setup(){//準備を始める。
-  Wire.begin();//
-  Serial.begin(9600);//シリアル通信のビットを9600とする。
-}
 
-void loop(){
-  Wire.beginTransmission(DSR1603_ADDRESS);
+void loop(){//繰り返し
+  Wire.beginTransmission(DSR1603_ADDRESS);//DSR1603のアドレスを開始し、伝達。
   Wire.write(0X00);//レジスタ0×00を指定
-  Wire.endTransmission(false);
-  Wire.requestFrom(DSR1603_ADDRESS,6,true);
-  int16_t x=Wire.read() | (Wire.read() <<8);
-  int16_t y=Wire.read() | (Wire.read() <<8);
-  int16_t z=Wire.read() | (Wire.read() <<8);
-  Serial.print("x:");
-  Serial.print(x);
-  Serial.print(",y:");
-  Serial.print(y);
-  Serial.print(",z:");
-  Serial.print(z);
-  delay(100);
+  Wire.endTransmission(false);//0の値を進めることを終わらせ、伝達。
+  Wire.requestFrom(DSR1603_ADDRESS,6,true);//DSR1603の値6を探す。
+  int16_t x=Wire.read() | (Wire.read() <<8);//
+  int16_t y=Wire.read() | (Wire.read() <<8);//
+  int16_t z=Wire.read() | (Wire.read() <<8);//
+  Serial.print("x:");//
+  Serial.print(x);//
+  Serial.print(",y:");//
+  Serial.print(y);//
+  Serial.print(",z:");//
+  Serial.print(z);//
+  delay(100);//
 }
 
 
-int merge(byte low, byte high){
-  int result = low | (high << 8);
-  if(result > 32767){
-    result -=65536;
+int merge(byte low, byte high){//
+  int result = low | (high << 8);//
+  if(result > 32767){//
+    result -=65536;//
   }
-  return result;
+  return result;//
 }
 
-void writeToBNO(byte reg, byte val, int dly){
-  Wire.beginTransmission(ADDRESS);
-  Wire.write(reg);
-  Wire.write(val);
-  Wire.endTransmission(false);
-  delay(dly);
+void writeToBNO(byte reg, byte val, int dly){//
+  Wire.beginTransmission(ADDRESS);//
+  Wire.write(reg);//
+  Wire.write(val);//
+  Wire.endTransmission(false);//
+  delay(dly);//
 }
 
-void initBNO(){
-  Wire.beginTransmission(ADDRESS);
-  Wire.write(0x00);
-  Wire.endTransmission(false);
-  Wire.requestFrom(ADDRESS,1);
-  if(Wire.read()==0xa0){
-    Serial.println("BNO055 found.");
-    writeToBNO(0x3d,0x00,80);//operating mode = confing mode
-    writeToBNO(0x3f,0x20,1000);//sys_trigger=rst_sys
-    writeToBNO(0x3e,0x00,80);//pwr_mode=normal mode
-    writeToBNO(0x3f,0x80,1000);//sys trigger=clk_sel ex_osc
-    writeToBNO(0x3d,0x0c,80);//operating mode=nodf
-  }else{
-    while(1){
-      Serial.println("BNO055 not found..");
-      delay(1000);
+void initBNO(){//
+  Wire.beginTransmission(ADDRESS);//
+  Wire.write(0x00);//
+  Wire.endTransmission(false);//
+  Wire.requestFrom(ADDRESS,1);//
+  if(Wire.read()==0xa0){//
+    Serial.println("BNO055 found.");//
+    writeToBNO(0x3d,0x00,80);//operating mode = confing mode//
+    writeToBNO(0x3f,0x20,1000);//sys_trigger=rst_sys//
+    writeToBNO(0x3e,0x00,80);//pwr_mode=normal mode//
+    writeToBNO(0x3f,0x80,1000);//sys trigger=clk_sel ex_osc//
+    writeToBNO(0x3d,0x0c,80);//operating mode=nodf//
+  }else{//
+    while(1){//
+      Serial.println("BNO055 not found..");//
+      delay(1000);//
     }
   }
 } 
 
 
-void setup(){
-  //put your setup code here, to run once:
-  Serial.begin(9600);
-  Wire.begin(9600);
-  initBNO();
+void setup(){//
+  //put your setup code here, to run once://
+  Serial.begin(9600);//
+  Wire.begin(9600);//
+  initBNO();//
 }
 
-void loop(){
-  //put your main code here, to run repeatedly:
-  int euler[6];
+void loop(){//
+  //put your main code here, to run repeatedly://  
+  int euler[6];//
 
-  Wire.beginTransmission(ADDRESS);
-  Wire.write(EULER_REGISTER);
-  Wire.endTransmission(false);
+  Wire.beginTransmission(ADDRESS);//
+  Wire.write(EULER_REGISTER);//
+  Wire.endTransmission(false);//
 
-  Wire.requestFrom(ADDRESS, 6);
-  byte buffer[6];
-  Wire.readBytes(buffer, 6);
+  Wire.requestFrom(ADDRESS, 6);//
+  byte buffer[6];//
+  Wire.readBytes(buffer, 6);//
 
-  euler[0] = merge(buffer[0], buffer[1]);
-  euler[1] = merge(buffer[2], buffer[2]);
-  euler[2] = merge(buffer[4], buffer[5]);
+  euler[0] = merge(buffer[0], buffer[1]);//
+  euler[1] = merge(buffer[2], buffer[2]);//
+  euler[2] = merge(buffer[4], buffer[5]);//
+  float yaw =float(euler[0])/16.0;//
+  float roll =float(euler[1])/16.0;//
+  float pitch =float(euler[2])/16.0;//
 
-  float yaw =float(euler[0])/16.0;
-  float roll =float(euler[1])/16.0;
-  float pitch =float(euler[2])/16.0;
-
-  Serial.print("yaw =");
-  Serial.print(yaw);
-  Serial.print("roll =");
-  Serial.print(roll);
-  Serial.print("pitch =");
-  Serial.print(pitch);
-  delay(50);
+  Serial.print("yaw =");//
+  Serial.print(yaw);//
+  Serial.print("roll =");//
+  Serial.print(roll);//
+  Serial.print("pitch =");//
+  Serial.print(pitch);//
+  delay(50);//
   }
 
 // put function definitions here://ここに関数定義を置く。
@@ -335,27 +353,26 @@ float degfunc(float tardeg){//degfuncに角度のアーカイブを代入する�
     }
   }
 }
-void motor(float angle){//モーターに角度を代入する。
+
+ void motor(float angle){//モーターに角度を代入する。
  int motor_speed_1=100*sin((angle-45)*(180/pi));//モーターの速さ1に角度から45引いた値に180から円周率を割った値をかけ、それに100をかけた値を代入する。
  int motor_speed_2=100*sin((angle-135)*(180/pi));//モーターの速さ2に角度から135引いた値に180から円周率を割った値をかけ、それに100をかけた値を代入する。
  int motor_speed_3=100*sin((angle-225)*(180/pi));//モーターの速さ3に角度から225引いた値に180から円周率を割った値をかけ、それに100をかけた値を代入する。
  int motor_speed_4=100*sin((angle-315)*(180/pi));//モーターの速さ4に角度から315引いた値に180から円周率を割った値をかけ、それに100をかけた値を代入する。
-
- if (motor_speed_1>=0){//後で変更 モータースピード1が0以上ならば
+}
+if (motor_speed_1>=0){//後で変更 モータースピード1が0以上ならば
   digitalWrite(1,HIGH);//8V出力する。
   analogWrite(1,motor_speed_1);//0V制御する。
  }else {//そうじゃなければ
   digitalWrite(1,LOW);//0V出力する。
   analogWrite(1,-motor_speed_1);//8V制御する。
- }
- if (motor_speed_2>=0){//後で変更　モータースピード2が0以上ならば
+ }if (motor_speed_2>=0){//後で変更　モータースピード2が0以上ならば
   digitalWrite(1,HIGH);//8V出力する。
   analogWrite(1,motor_speed_2);//0V制御する。
  }else {//そうじゃなければ
   digitalWrite(1,LOW);//0V出力する。
   analogWrite(1,-motor_speed_2);//8V制御する。
- }
- if (motor_speed_3>=0){//後で変更　モータースピード3が0以上ならば
+ }if (motor_speed_3>=0){//後で変更　モータースピード3が0以上ならば
   digitalWrite(1,HIGH);//8V出力する。
   analogWrite(1,motor_speed_3);//0V制御する。
  }else {//そうじゃなければ
